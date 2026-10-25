@@ -1,8 +1,8 @@
 [Unit]
-Description=Streamarr backup: Sundays 21:00 (or next boot if the PC was off)
+Description=Streamarr backup: Sundays 11:00 (or next boot if the PC was off)
 
 [Timer]
-OnCalendar=Sun 21:00
+OnCalendar=Sun 11:00
 Persistent=true
 
 [Install]

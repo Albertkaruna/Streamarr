@@ -29,10 +29,10 @@ Files: `docker-compose.yml` (all containers), `.env` (secrets — not in git), `
 
 ## Backups (automatic)
 
-Every Sunday 21:00, or ~10 min after next boot if the PC was off (`servarr-backup.timer` → `backup.sh`):
+Every Sunday 11:00 (11 AM IST), or ~10 min after next boot if the PC was off (`servarr-backup.timer` → `backup.sh`):
 - **This GitHub repo**: hand-made config above. No secrets.
 - **`servarr-DATE.tar.gz`** (~90 MB): all of `~/servarr` incl. `.env`, passwords and every app database
-  (queues, profiles, Trakt link, Jellyfin users + watch history). Last 4 kept in `/mnt/data/Backups/Streamarr/` and
+  (queues, profiles, Trakt link, Jellyfin users + watch history). Last 3 kept in `/mnt/data/Backups/Streamarr/` and
   Google Drive `Streamarr-Backups/`. **Contains secrets — keep private.**
 
 Media files are not backed up (too big) — re-download if the disk is lost.

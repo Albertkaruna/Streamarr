@@ -1,6 +1,6 @@
 #!/bin/bash
 # Weekly Streamarr backup (servarr-backup.timer):
-#   1. settings + app databases + .env → /mnt/data/Backups/Streamarr/servarr-DATE.tar.gz (keep 4)
+#   1. settings + app databases + .env → /mnt/data/Backups/Streamarr/servarr-DATE.tar.gz (keep 3)
 #   2. mirror that folder to Google Drive (rclone remote "gdrive")
 #   3. commit + push hand-made config (see .gitignore) to GitHub
 set -euo pipefail
@@ -19,7 +19,7 @@ docker run --rm --entrypoint tar -v "$S":/s:ro -v "$DEST":/out lscr.io/linuxserv
   --exclude=./config/jellyfin/data/metadata --exclude=./config/jellyfin/cache \
   --exclude='./config/*/MediaCover' --exclude='./config/*/logs' --exclude='*/logs.db*' \
   --exclude='*/__pycache__' --exclude=./tunarr/.cache .
-ls -1t "$DEST"/servarr-*.tar.gz | tail -n +5 | xargs -r rm --
+ls -1t "$DEST"/servarr-*.tar.gz | tail -n +4 | xargs -r rm --
 
 rclone sync "$DEST" gdrive:Streamarr-Backups --include 'servarr-*.tar.gz'
 
