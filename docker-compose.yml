@@ -1,0 +1,172 @@
+# Media root = existing library on Data disk (fstab-mounted at /mnt/data).
+# Downloads land in /data/torrents, arr apps hardlink into /data/Movies, "/data/TV Shows", /data/Music
+# (same disk = instant, no extra space).
+
+x-env: &env
+  PUID: 1000
+  PGID: 1000
+  TZ: Asia/Kolkata
+
+x-common: &common
+  restart: unless-stopped
+  environment: *env
+
+services:
+  prowlarr:
+    <<: *common
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    dns: [1.1.1.1, 8.8.8.8]  # Vi DNS sinkholes torrent sites
+    volumes:
+      - ./config/prowlarr:/config
+    ports:
+      - 9696:9696
+
+  # Proton Free VPN, used only by blocked indexers: Prowlarr -> HTTP proxy gluetun:8888 / FlareSolverr gluetun:8191.
+  # Free servers block P2P, so torrents stay off the VPN.
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add: [NET_ADMIN]
+    devices: [/dev/net/tun:/dev/net/tun]
+    environment:
+      TZ: Asia/Kolkata
+      VPN_SERVICE_PROVIDER: protonvpn
+      VPN_TYPE: openvpn
+      OPENVPN_USER: ${PROTON_OVPN_USER}
+      OPENVPN_PASSWORD: ${PROTON_OVPN_PASSWORD}
+      FREE_ONLY: "on"
+      HTTPPROXY: "on"
+      OPENVPN_MSSFIX: "1250"  # mobile hotspot path MTU is ~1358; default 1500 stalls the tunnel
+      # status API (:8000, Docker network only) for the homepage VPN tile
+      HTTP_CONTROL_SERVER_AUTH_DEFAULT_ROLE: '{"auth":"apikey","apikey":"${GLUETUN_API_KEY}"}'
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    network_mode: service:gluetun
+    environment:
+      TZ: Asia/Kolkata
+
+  radarr:
+    <<: *common
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    volumes:
+      - ./config/radarr:/config
+      - /mnt/data/Media:/data
+    ports:
+      - 7878:7878
+
+  sonarr:
+    <<: *common
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    volumes:
+      - ./config/sonarr:/config
+      - /mnt/data/Media:/data
+    ports:
+      - 8989:8989
+
+  lidarr:
+    <<: *common
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    volumes:
+      - ./config/lidarr:/config
+      - /mnt/data/Media:/data
+    ports:
+      - 8686:8686
+
+  qbittorrent:
+    <<: *common
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      <<: *env
+      WEBUI_PORT: 8080
+    volumes:
+      - ./config/qbittorrent:/config
+      - /mnt/data/Media:/data
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+
+  # Soulseek client + web UI (:5030). Manual downloads -> Media/Songs/Manual; the playlist
+  # page (~/servarr/tunarr/tunarr.py) queues its picks here too, then files them per playlist.
+  slskd:
+    image: slskd/slskd:latest
+    container_name: slskd
+    restart: unless-stopped
+    environment:
+      <<: *env
+      SLSKD_SLSK_USERNAME: ${SLSK_USER}
+      SLSKD_SLSK_PASSWORD: ${SLSK_PASS}
+      SLSKD_USERNAME: karuna
+      SLSKD_PASSWORD: ${HOMEPAGE_VAR_PASSWORD}
+      SLSKD_API_KEY: ${SLSKD_API_KEY}
+      SLSKD_JWT_KEY: ${SLSKD_JWT_KEY}
+      SLSKD_DOWNLOADS_DIR: /data/Songs/Manual
+      SLSKD_INCOMPLETE_DIR: /data/Songs/.incomplete
+      SLSKD_NO_HTTPS: "true"
+    volumes:
+      - ./config/slskd:/app
+      - /mnt/data/Media:/data
+    ports:
+      - 5030:5030
+      - 50300:50300
+
+  # Media server (:8096) for the Findroid / Jellyfin apps: stream or download for offline.
+  # Library is read-only - Jellyfin keeps its metadata in ./config/jellyfin.
+  jellyfin:
+    <<: *common
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    hostname: streamarr   # otherwise Docker's random ID shows as the server name
+    volumes:
+      - ./config/jellyfin:/config
+      - /mnt/data/Media:/data:ro
+    ports:
+      - 8096:8096
+
+  # Audiobooks + ebooks (:8789), Readarr fork (beta). Library in /data/Audiobooks, /data/Books
+  chaptarr:
+    <<: *common
+    image: chaptarr/chaptarr:latest
+    container_name: chaptarr
+    volumes:
+      - ./config/chaptarr:/config
+      - /mnt/data/Media:/data
+    ports:
+      - 8789:8789
+
+  # Dashboard (:3000): all services, live stats, health dots, disk space. Config in ./homepage/
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    environment:
+      <<: *env
+      # Homepage drops root via su-exec, which REPLACES supplementary groups (group_add is lost).
+      # So make the host "docker" group (gid 117) the primary group -> can read docker.sock for status dots.
+      PGID: 117
+      HOMEPAGE_ALLOWED_HOSTS: "*"   # PC's hotspot IP changes; LAN-only anyway
+      HOMEPAGE_VAR_RADARR_KEY: ${HOMEPAGE_VAR_RADARR_KEY}
+      HOMEPAGE_VAR_SONARR_KEY: ${HOMEPAGE_VAR_SONARR_KEY}
+      HOMEPAGE_VAR_LIDARR_KEY: ${HOMEPAGE_VAR_LIDARR_KEY}
+      HOMEPAGE_VAR_PROWLARR_KEY: ${HOMEPAGE_VAR_PROWLARR_KEY}
+      HOMEPAGE_VAR_SLSKD_KEY: ${SLSKD_API_KEY}
+      HOMEPAGE_VAR_GLUETUN_KEY: ${GLUETUN_API_KEY}
+      HOMEPAGE_VAR_PASSWORD: ${HOMEPAGE_VAR_PASSWORD}
+      HOMEPAGE_VAR_JELLYFIN_KEY: ${HOMEPAGE_VAR_JELLYFIN_KEY}
+    extra_hosts: ["host.docker.internal:host-gateway"]   # Tunarr runs on the host (:5040)
+    volumes:
+      - ./homepage:/app/config
+      - ./homepage/images:/app/public/images:ro   # brand logo + background
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /mnt/data:/mnt/data:ro   # disk-space widget only
+    ports:
+      - 3000:3000

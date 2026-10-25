@@ -1,0 +1,9 @@
+[Unit]
+Description=Streamarr backup: Sundays 21:00 (or next boot if the PC was off)
+
+[Timer]
+OnCalendar=Sun 21:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

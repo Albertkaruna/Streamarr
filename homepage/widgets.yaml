@@ -1,0 +1,16 @@
+# https://gethomepage.dev/widgets/info/
+- logo:
+    icon: /images/streamarr.svg
+- greeting:                # styled as the Streamarr wordmark in custom.css
+    text_size: 2xl
+    text: Streamarr
+- resources:
+    cpu: true
+    memory: true
+    disk: /mnt/data       # data disk (bind-mounted read-only into the container)
+    refresh: 5000         # ms; default 1500 polls needlessly often
+- datetime:
+    text_size: md
+    format:
+      dateStyle: medium
+      timeStyle: short

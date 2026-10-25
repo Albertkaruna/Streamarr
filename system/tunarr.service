@@ -1,0 +1,11 @@
+[Unit]
+Description=Tunarr - songs page + worker (YouTube playlists -> slskd), http://<pc>:5040
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 -I /home/karuna/servarr/tunarr/tunarr.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

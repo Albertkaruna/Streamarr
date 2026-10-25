@@ -1,0 +1,9 @@
+[Unit]
+Description=Trakt list sync: 15 min after boot, then hourly
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=1h
+
+[Install]
+WantedBy=timers.target

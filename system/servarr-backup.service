@@ -1,0 +1,8 @@
+[Unit]
+Description=Streamarr weekly backup (archive → Google Drive, config → GitHub)
+
+[Service]
+Type=oneshot
+# Persistent timer can fire right at boot; give docker + the data disk + network time
+ExecStartPre=/usr/bin/sleep 600
+ExecStart=/home/karuna/servarr/backup.sh

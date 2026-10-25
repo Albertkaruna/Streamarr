@@ -1,0 +1,16 @@
+/* Streamarr brand on Homepage — indigo → cyan, matches Jellyfin / Tunarr */
+#information-widgets .information-widget-greeting span {
+  font-weight: 800; letter-spacing: -.02em;
+  background: linear-gradient(90deg, #c7d2fe, #67e8f9);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+#information-widgets .information-widget-greeting::after {
+  content: "Livin' the Stream Life"; display: block; font-size: .8rem; letter-spacing: .06em;
+  color: rgba(226, 232, 240, .65); margin-top: .1rem;
+}
+#information-widgets .information-widget-logo img,
+#information-widgets .information-widget-logo svg { filter: drop-shadow(0 6px 18px rgba(99, 102, 241, .45)); }
+
+/* cards: subtle indigo glass edge */
+.service-card { border: 1px solid rgba(129, 140, 248, .14); }
+.service-card:hover { border-color: rgba(103, 232, 249, .35); }

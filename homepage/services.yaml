@@ -1,0 +1,133 @@
+# Links use host "pc.lan" — custom.js swaps it for the address you opened the dashboard with.
+# Widget URLs use container names (same compose network); Tunarr is on the host.
+- Downloads:
+    - qBittorrent:
+        icon: qbittorrent.png
+        href: http://pc.lan:8080
+        description: Full speed 22:00–09:00
+        server: local
+        container: qbittorrent
+        widget:
+          type: qbittorrent
+          url: http://qbittorrent:8080
+          username: karuna
+          password: "{{HOMEPAGE_VAR_PASSWORD}}"
+    - Prowlarr:
+        icon: prowlarr.png
+        href: http://pc.lan:9696
+        description: Indexers
+        server: local
+        container: prowlarr
+        widget:
+          type: prowlarr
+          url: http://prowlarr:9696
+          key: "{{HOMEPAGE_VAR_PROWLARR_KEY}}"
+
+- Media:
+    - Jellyfin:
+        icon: jellyfin.png
+        href: http://pc.lan:8096
+        description: Watch & download for offline (Findroid app)
+        server: local
+        container: jellyfin
+        widget:   # customapi: built-in jellyfin widget calls /emby/* routes that Jellyfin 12 removed
+          type: customapi
+          url: http://jellyfin:8096/Items/Counts
+          headers:
+            Authorization: 'MediaBrowser Token="{{HOMEPAGE_VAR_JELLYFIN_KEY}}"'
+          mappings:
+            - field: MovieCount
+              label: Movies
+              format: number
+            - field: SeriesCount
+              label: Shows
+              format: number
+            - field: EpisodeCount
+              label: Episodes
+              format: number
+            - field: SongCount
+              label: Songs
+              format: number
+    - Radarr:
+        icon: radarr.png
+        href: http://pc.lan:7878
+        description: Movies · Trakt watchlist
+        server: local
+        container: radarr
+        widget:
+          type: radarr
+          url: http://radarr:7878
+          key: "{{HOMEPAGE_VAR_RADARR_KEY}}"
+          fields: ["wanted", "queued", "movies"]
+    - Sonarr:
+        icon: sonarr.png
+        href: http://pc.lan:8989
+        description: TV shows · Trakt watchlist
+        server: local
+        container: sonarr
+        widget:
+          type: sonarr
+          url: http://sonarr:8989
+          key: "{{HOMEPAGE_VAR_SONARR_KEY}}"
+    - Lidarr:
+        icon: lidarr.png
+        href: http://pc.lan:8686
+        description: Music albums
+        server: local
+        container: lidarr
+        widget:
+          type: lidarr
+          url: http://lidarr:8686
+          key: "{{HOMEPAGE_VAR_LIDARR_KEY}}"
+
+- Music:
+    - Tunarr:
+        icon: /images/tunarr.svg
+        href: http://pc.lan:5040
+        description: HD search, playlists, downloads
+        siteMonitor: http://host.docker.internal:5040/manifest.json   # public, no auth
+        widget:
+          type: customapi
+          url: http://host.docker.internal:5040/api/summary
+          username: karuna
+          password: "{{HOMEPAGE_VAR_PASSWORD}}"
+          mappings:
+            - field: downloading
+              label: Downloading
+              format: number
+            - field: done
+              label: Done
+              format: number
+            - field: notfound
+              label: Not found
+              format: number
+            - field: mode
+              label: Mode
+    - slskd:
+        icon: slskd.png
+        href: http://pc.lan:5030
+        description: Soulseek client
+        server: local
+        container: slskd
+        widget:
+          type: slskd
+          url: http://slskd:5030
+          key: "{{HOMEPAGE_VAR_SLSKD_KEY}}"
+          fields: ["slskStatus", "downloads", "uploads"]
+
+- VPN:
+    - Gluetun:
+        icon: gluetun.png
+        description: Proton Free · blocked indexers only
+        server: local
+        container: gluetun
+        widget:
+          type: gluetun
+          url: http://gluetun:8000
+          key: "{{HOMEPAGE_VAR_GLUETUN_KEY}}"
+          version: 2          # gluetun >= 3.40.1
+    - FlareSolverr:
+        icon: flaresolverr.png
+        description: Cloudflare solver, inside the VPN
+        server: local
+        container: flaresolverr

@@ -1,0 +1,38 @@
+# https://gethomepage.dev/configs/settings/
+title: Streamarr
+description: Livin' the Stream Life
+favicon: /images/streamarr.svg
+theme: dark
+color: indigo              # matches the Streamarr indigo → cyan brand
+background:                # Streamarr splash art without text (./homepage/images → /app/public/images)
+  image: /images/streamarr-bg.jpg
+  brightness: 75
+  saturate: 110
+cardBlur: md               # frosted cards over the background
+headerStyle: clean
+statusStyle: dot
+iconStyle: theme          # mdi-/si- icons follow the theme colour instead of the default gradient
+useEqualHeights: true     # tidy grid: cards in a row share one height
+hideVersion: true
+disableUpdateCheck: true  # no GitHub release poll on every load
+disableIndexing: true
+quicklaunch:              # type anywhere to jump to a service
+  searchDescriptions: true
+  hideInternetSearch: true
+  hideVisitURL: true
+
+# Desktop: Media as a full-width row, the other three groups side by side.
+# Phone: everything stacks into one column automatically.
+layout:
+  Downloads:
+    style: row
+    columns: 2
+    icon: mdi-download
+  Media:
+    style: row
+    columns: 4
+    icon: mdi-filmstrip
+  Music:
+    icon: mdi-music
+  VPN:
+    icon: mdi-shield-lock

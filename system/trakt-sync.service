@@ -1,0 +1,6 @@
+[Unit]
+Description=Force Sonarr/Radarr Trakt list sync
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I /home/karuna/servarr/trakt_sync.py
