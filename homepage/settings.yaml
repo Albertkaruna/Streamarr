@@ -6,7 +6,7 @@ theme: dark
 color: indigo              # matches the Streamarr indigo → cyan brand
 background:                # Streamarr splash art without text (./homepage/images → /app/public/images)
   image: /images/streamarr-bg.jpg
-  brightness: 75
+  brightness: 55
   saturate: 110
 cardBlur: md               # frosted cards over the background
 headerStyle: clean
@@ -14,6 +14,8 @@ statusStyle: dot
 iconStyle: theme          # mdi-/si- icons follow the theme colour instead of the default gradient
 useEqualHeights: true     # tidy grid: cards in a row share one height
 hideVersion: true
+target: _blank            # open apps in a new tab (phone + desktop)
+bookmarksStyle: icons     # quick-launch row = icons only
 disableUpdateCheck: true  # no GitHub release poll on every load
 disableIndexing: true
 quicklaunch:              # type anywhere to jump to a service
@@ -21,18 +23,29 @@ quicklaunch:              # type anywhere to jump to a service
   hideInternetSearch: true
   hideVisitURL: true
 
-# Desktop: Media as a full-width row, the other three groups side by side.
-# Phone: everything stacks into one column automatically.
+# Every group gets its own full-width row (desktop); phone stacks into one column automatically.
 layout:
+  Open:
+    style: row
+    columns: 10
+    icon: mdi-rocket-launch
   Downloads:
     style: row
     columns: 2
     icon: mdi-download
   Media:
     style: row
-    columns: 4
+    columns: 3
     icon: mdi-filmstrip
   Music:
+    style: row
+    columns: 2
     icon: mdi-music
   VPN:
+    style: row
+    columns: 2
     icon: mdi-shield-lock
+  System:
+    style: row
+    columns: 2
+    icon: mdi-backup-restore

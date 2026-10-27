@@ -9,6 +9,7 @@ Home media server on Ubuntu: wishlist in → downloads at night → watch anywhe
 | Sonarr / Radarr | 8989 / 7878 | TV shows / movies from the Trakt watchlist |
 | Lidarr | 8686 | Music albums |
 | Chaptarr | 8789 | Audiobooks + ebooks |
+| Discover | 5050 | Recommendations from your library, + Want → Sonarr/Radarr (code: separate repo `streamarr-discover`, cloned to `~/Projects/streamarr-discover`) |
 | Prowlarr | 9696 | Torrent indexers (search sites) |
 | qBittorrent | 8080 | Downloads — full speed 22:00–09:00, slow by day, 1 at a time, season order |
 | slskd | 5030 | Soulseek client (songs) |
@@ -53,7 +54,8 @@ Media files are not backed up (too big) — re-download if the disk is lost.
    ```
 4. Docker group id: `getent group docker` → if it isn't `117`, put the new number in `docker-compose.yml`
    (homepage → `PGID`), otherwise the dashboard can't see containers.
-5. Start: `cd ~/servarr && docker compose up -d` (pulls all images — slow on mobile data; re-run if a pull times out).
+5. Clone the Discover repo to `~/Projects/streamarr-discover` (compose builds it from there).
+   Start: `cd ~/servarr && docker compose up -d` (pulls all images — slow on mobile data; re-run if a pull times out).
 6. Timers (Tunarr, Trakt sync, backup):
    ```
    mkdir -p ~/.config/systemd/user && cp system/*.service system/*.timer ~/.config/systemd/user/

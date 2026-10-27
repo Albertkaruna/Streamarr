@@ -143,6 +143,33 @@ services:
     ports:
       - 8789:8789
 
+  # Recommendations (:5050): movies/shows from your Jellyfin history, + Want → Sonarr/Radarr.
+  # Code: ~/Projects/streamarr-discover (own repo). Data: ./config/discover (SQLite, in the weekly backup).
+  discover:
+    build: /home/karuna/Projects/streamarr-discover
+    image: streamarr-discover:local
+    container_name: discover
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Kolkata
+      DISCOVER_PASSWORD: ${HOMEPAGE_VAR_PASSWORD}
+      JELLYFIN_KEY: ${HOMEPAGE_VAR_JELLYFIN_KEY}
+      SONARR_KEY: ${HOMEPAGE_VAR_SONARR_KEY}
+      RADARR_KEY: ${HOMEPAGE_VAR_RADARR_KEY}
+      TMDB_KEY: ${TMDB_KEY:-}
+      TRAKT_CLIENT_ID: ${TRAKT_CLIENT_ID:-}
+      GEMINI_KEY: ${GEMINI_KEY:-}
+      HARDCOVER_TOKEN: ${HARDCOVER_TOKEN:-}
+      CHAPTARR_KEY: ${HOMEPAGE_VAR_CHAPTARR_KEY}
+      TUNARR_URL: http://host.docker.internal:5040
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    volumes:
+      - ./config/discover:/data
+      - ./tunarr/tunarr_state.json:/tunarr/state.json:ro   # your playlists → music taste
+    ports:
+      - 5050:5050
+
   # Dashboard (:3000): all services, live stats, health dots, disk space. Config in ./homepage/
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
@@ -162,6 +189,7 @@ services:
       HOMEPAGE_VAR_GLUETUN_KEY: ${GLUETUN_API_KEY}
       HOMEPAGE_VAR_PASSWORD: ${HOMEPAGE_VAR_PASSWORD}
       HOMEPAGE_VAR_JELLYFIN_KEY: ${HOMEPAGE_VAR_JELLYFIN_KEY}
+      HOMEPAGE_VAR_CHAPTARR_KEY: ${HOMEPAGE_VAR_CHAPTARR_KEY}
     extra_hosts: ["host.docker.internal:host-gateway"]   # Tunarr runs on the host (:5040)
     volumes:
       - ./homepage:/app/config

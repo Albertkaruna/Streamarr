@@ -69,6 +69,39 @@
           type: sonarr
           url: http://sonarr:8989
           key: "{{HOMEPAGE_VAR_SONARR_KEY}}"
+    - Discover:
+        icon: /images/discover.svg
+        href: http://pc.lan:5050
+        description: Picks from your library · + Want → downloads
+        server: local
+        container: discover
+        widget:
+          type: customapi
+          url: http://discover:5050/api/summary
+          username: karuna
+          password: "{{HOMEPAGE_VAR_PASSWORD}}"
+          mappings:
+            - field: movies
+              label: Movie picks
+              format: number
+            - field: shows
+              label: Show picks
+              format: number
+            - field: wanted
+              label: Wanted
+              format: number
+            - field: updated
+              label: Updated
+    - Chaptarr:
+        icon: chaptarr.png
+        href: http://pc.lan:8789
+        description: Audiobooks + ebooks
+        server: local
+        container: chaptarr
+        widget:
+          type: readarr          # Chaptarr is a Readarr fork; same API
+          url: http://chaptarr:8789
+          key: "{{HOMEPAGE_VAR_CHAPTARR_KEY}}"
     - Lidarr:
         icon: lidarr.png
         href: http://pc.lan:8686
@@ -131,3 +164,27 @@
         description: Cloudflare solver, inside the VPN
         server: local
         container: flaresolverr
+
+- System:
+    - Backup:
+        icon: mdi-backup-restore
+        description: Weekly · Sun 11 AM · local + GitHub + Drive
+        widget:   # status written by ../backup.sh, served by Tunarr
+          type: customapi
+          url: http://host.docker.internal:5040/api/backup
+          username: karuna
+          password: "{{HOMEPAGE_VAR_PASSWORD}}"
+          mappings:
+            - field: status
+              label: Status
+              remap:
+                - value: OK
+                  to: ✓ OK
+                - value: FAILED
+                  to: ✗ FAILED
+            - field: last
+              label: Last run
+            - field: github
+              label: GitHub
+            - field: drive
+              label: Drive

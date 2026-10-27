@@ -14,3 +14,52 @@
 /* cards: subtle indigo glass edge */
 .service-card { border: 1px solid rgba(129, 140, 248, .14); }
 .service-card:hover { border-color: rgba(103, 232, 249, .35); }
+
+/* ---------- readability ---------- */
+/* groups: clear section headers with a divider and breathing room */
+.services-group { margin-bottom: 1.1rem; }
+.service-group-name { font-weight: 700; letter-spacing: -.01em; color: #e0e7ff !important; }
+.services-group > button { padding-bottom: .45rem; border-bottom: 1px solid rgba(129, 140, 248, .18); }
+
+/* cards: near-solid dark glass so text doesn't fight the background */
+.service-card {
+  background: rgba(15, 18, 42, .78) !important; border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28) !important; padding: .35rem !important;
+}
+.service-card:hover { background: rgba(22, 27, 60, .85) !important; }
+.service-name { font-size: .98rem !important; font-weight: 700; color: #f1f5f9; }
+.service-description { color: rgba(203, 213, 225, .7) !important; font-size: .74rem !important; }
+
+/* stat boxes: big bold number, small muted label (Homepage default is the reverse) */
+.service-block { background: rgba(99, 102, 241, .1) !important; border-radius: 8px !important; padding: .45rem .25rem !important; }
+.service-block-value { font-weight: 700 !important; font-size: 1.05rem !important; color: #f8fafc; }
+.service-block-label { font-weight: 500 !important; font-size: .64rem !important; letter-spacing: .06em; color: rgba(165, 180, 252, .8); margin-top: .1rem; }
+
+/* ---------- quick-launch "Open" row: app-icon grid (4 across on phone, 8 on desktop) ---------- */
+.bookmark-group ul { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: .55rem !important; }
+@media (min-width: 900px) { .bookmark-group ul { grid-template-columns: repeat(10, 1fr) !important; } }
+.bookmark a { margin: 0 !important; height: 100%; background: rgba(15, 18, 42, .78) !important;
+  border: 1px solid rgba(129, 140, 248, .14); border-radius: 14px !important; }
+.bookmark a:hover, .bookmark a:active { border-color: rgba(103, 232, 249, .4); background: rgba(22, 27, 60, .9) !important; }
+.bookmark a > div { flex-direction: column; align-items: center; padding: .75rem .25rem .6rem; gap: .4rem; }
+.bookmark-icon { width: auto !important; background: none !important; }
+.bookmark-icon > div { width: 2.4rem !important; height: 2.4rem !important; }
+.bookmark-text { justify-content: center !important; }
+.bookmark-name { padding: 0 !important; font-size: .72rem !important; font-weight: 600; color: #e2e8f0; text-align: center; }
+.bookmark-description { display: none !important; }
+
+/* ---------- phone ---------- */
+@media (max-width: 640px) {
+  /* header: logo + wordmark side by side, only disk space (the number that matters), no clock */
+  #information-widgets { margin: 1rem 1rem 0 !important; }
+  #widgets-wrap { align-items: center; row-gap: .5rem; }
+  .information-widget-datetime, .information-widget-resource:nth-child(-n+2) { display: none !important; }  /* CPU + memory; disk stays */
+  /* cards: tighter padding, bigger tap area for the whole card */
+  .services-group { margin-bottom: .6rem; padding-left: .5rem !important; padding-right: .5rem !important; }
+  .service-card { padding: .3rem !important; }
+  .service-title { min-height: 3.25rem; }
+  .service-block { padding: .5rem .15rem !important; }
+  .service-block-value { font-size: 1rem !important; }
+  .service-block-label { font-size: .58rem !important; letter-spacing: .03em; }
+  .bookmark-group { padding-left: .5rem !important; padding-right: .5rem !important; }
+}

@@ -5,7 +5,7 @@
 #     finished files moved from Songs/Manual/... to Songs/<playlist>/
 #   - songs Soulseek can't find (3 tries) -> 320/FLAC soundtrack pack via Prowlarr -> qBittorrent
 #   - runs 22:00-09:00; "Download now" overrides until the next 09:00 (like qBittorrent's gauge)
-import base64, datetime, html, http.cookiejar, json, re, shutil, subprocess, sys, threading, time, uuid
+import base64, datetime, hashlib, hmac, html, http.cookiejar, json, re, shutil, subprocess, sys, threading, time, uuid
 import urllib.parse, urllib.request, zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -347,6 +347,36 @@ def worker(st):
         wake.wait(60)
 
 
+# ---------- sign-in page (replaces the browser's basic-auth popup) ----------
+LOGIN = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Sign in · Tunarr</title>
+<meta name="theme-color" content="#0b1020"><link rel="manifest" href="/manifest.json"><link rel="icon" href="/icon.svg">
+<script>addEventListener("DOMContentLoaded",()=>{document.querySelector("form").action="/login"+location.search})</script>
+<style>
+:root{--bg:#0b1020;--line:#283056;--fg:#e8eaf6;--mut:#9aa3c0}
+*{box-sizing:border-box}html,body{margin:0;min-height:100vh;color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+background:radial-gradient(900px 600px at 10% -10%,rgba(99,102,241,.3),transparent 60%),radial-gradient(900px 700px at 100% 110%,rgba(34,211,238,.18),transparent 60%),var(--bg) fixed}
+main{min-height:100vh;display:grid;place-items:center;padding:24px 16px}
+form{width:100%;max-width:360px;background:rgba(15,18,42,.82);border:1px solid rgba(129,140,248,.18);border-radius:16px;padding:32px 26px;box-shadow:0 20px 60px rgba(0,0,0,.4);backdrop-filter:blur(12px)}
+.logo{display:block;width:72px;height:72px;margin:0 auto 14px;border-radius:20px;filter:drop-shadow(0 10px 28px rgba(99,102,241,.5))}
+h1{margin:0;text-align:center;font-size:28px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(90deg,#c7d2fe,#67e8f9);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{text-align:center;color:var(--mut);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:2px 0 24px}
+label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:14px 0 6px}
+input{width:100%;font:inherit;color:var(--fg);background:rgba(11,16,32,.9);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none}
+input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.25)}
+button{width:100%;margin-top:22px;font:inherit;font-weight:700;color:#fff;border:0;border-radius:10px;padding:12px;cursor:pointer;background:linear-gradient(90deg,#6366f1,#06b6d4)}
+button:hover{filter:brightness(1.1)}
+.err{margin:16px 0 0;padding:9px 12px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#fca5a5;font-size:13px;text-align:center}
+.foot{text-align:center;color:var(--mut);font-size:12px;margin-top:18px;opacity:.7}
+</style></head><body><main><form method="post" action="/login">
+<img class="logo" src="/icon.svg" alt=""><h1>Tunarr</h1><div class="sub">by Streamarr</div>
+@@err@@
+<label for="u">Username</label><input id="u" name="user" autocomplete="username" autocapitalize="none" required autofocus>
+<label for="p">Password</label><input id="p" name="pw" type="password" autocomplete="current-password" required>
+<button type="submit">Sign in</button><div class="foot">Livin' the Stream Life</div>
+</form></main></body></html>"""
+
+
 # ---------- web page (dark, slskd / Semantic-UI-like, tabs) ----------
 PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Tunarr</title>
@@ -420,7 +450,8 @@ form{display:inline;margin:0}
 </style></head><body>
 <div class="bar"><a class="brand" href="/#search" title="Home"><img class="logo" src="/icon.svg" alt=""><span><b>Tunarr</b><small>by Streamarr</small></span></a>
 <a class="item" href="@@slskd_url@@" title="slskd: browse users, all transfers"><span class="dot" style="background:@@dot@@"></span>slskd</a>
-<a class="item" href="@@qbt_url@@">qBittorrent</a></div>
+<a class="item" href="@@qbt_url@@">qBittorrent</a>
+<a class="item" href="/logout" title="Sign out">Sign out</a></div>
 <nav class="tabs"><a href="#search" data-tab="search"><span class="ic">🔍</span>Search</a>
 <a href="#playlists" data-tab="playlists"><span class="ic">📋</span>Playlists</a>
 <a href="#downloads" data-tab="downloads"><span class="ic">⬇</span>Downloads<span class="badge" id="badge"></span></a></nav>
@@ -486,6 +517,9 @@ $("#rlist").addEventListener("click",async ev=>{const b=ev.target.closest("butto
 // "Search manually" on not-found playlist songs
 document.addEventListener("click",ev=>{const b=ev.target.closest("[data-search]"); if(b){ev.preventDefault(); runSearch(b.dataset.search)}});
 recent();
+// ?q=… (from Discover's "+ Tunarr") → run that search right away
+{const q0=new URLSearchParams(location.search).get("q");
+ if(q0){runSearch(q0); history.replaceState(null,"",location.pathname+"#search")}}
 
 // ---- live downloads (paused while the tab/screen is hidden) ----
 async function loadDl(){if(document.hidden)return; let r; try{r=await api("/api/downloads")}catch(e){return}
@@ -726,19 +760,33 @@ def transfer_action(st, action, user=None, tid=None):
 
 def make_handler(st):
     pw = secret(r"password: (\S+)", SERVARR / "credentials.txt")
-    expected = "Basic " + base64.b64encode(f"karuna:{pw}".encode()).decode()
+    expected = "Basic " + base64.b64encode(f"karuna:{pw}".encode()).decode()   # Homepage tile still uses this
+    # browser sessions: cookie derived from the password → survives restarts, dies when the password changes
+    session = hmac.new(pw.encode(), b"tunarr-session", hashlib.sha256).hexdigest()
 
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
             pass
 
         def authed(self):
-            if self.headers.get("Authorization") == expected:
+            cookie = re.search(r"(?:^|;\s*)tunarr=(\w+)", self.headers.get("Cookie", ""))
+            # header login only for the Homepage tiles: browsers silently resend old popup credentials,
+            # which would make Sign out a no-op everywhere else
+            tile = urllib.parse.urlparse(self.path).path in ("/api/summary", "/api/backup")
+            if (tile and hmac.compare_digest(self.headers.get("Authorization", ""), expected)) or (
+                    cookie and hmac.compare_digest(cookie[1], session)):
                 return True
-            self.send_response(401)
-            self.send_header("WWW-Authenticate", 'Basic realm="tunarr"')
-            self.end_headers()
+            if self.path.startswith("/api/"):           # no WWW-Authenticate header → no browser popup
+                self.reply({"ok": False, "error": "signed out"}, code=401)
+            else:
+                self.reply(LOGIN.replace("@@err@@", ""))
             return False
+
+        def redirect(self, cookie, to="/"):
+            self.send_response(303)
+            self.send_header("Location", to)
+            self.send_header("Set-Cookie", f"tunarr={cookie}; Path=/; HttpOnly; SameSite=Lax; Max-Age={0 if not cookie else 31536000}")
+            self.end_headers()
 
         def reply(self, body, ctype="text/html; charset=utf-8", code=200, cache="no-store"):
             data = body.encode() if isinstance(body, str) else json.dumps(body, ensure_ascii=False).encode()
@@ -754,6 +802,8 @@ def make_handler(st):
                 return self.reply(json.dumps(MANIFEST), "application/manifest+json", cache="max-age=86400")
             if u.path == "/icon.svg":
                 return self.reply(ICON, "image/svg+xml", cache="max-age=86400")
+            if u.path == "/logout":
+                return self.redirect("")
             if not self.authed():
                 return
             qs = urllib.parse.parse_qs(u.query)
@@ -770,14 +820,24 @@ def make_handler(st):
                     return self.reply({"downloading": sum(x["kind"] in ("active", "waiting") for x in dl),
                                        "done": sum(t["status"] == "done" for t in tr),
                                        "notfound": sum(t["status"] == "notfound" for t in tr), "mode": mode})
+                if u.path == "/api/backup":             # Homepage "Backup" tile; written by ../backup.sh
+                    f = SERVARR / "backup-status.json"
+                    return self.reply(json.loads(f.read_text()) if f.exists() else {"status": "Never run", "last": "—"})
             except Exception as ex:
                 return self.reply({"error": str(ex)[:200], "items": [], "groups": [], "complete": True, "responses": 0}, code=502)
             self.reply(render(st, self.headers.get("Host", "localhost")))
 
         def do_POST(self):
+            raw = self.rfile.read(int(self.headers.get("Content-Length", 0))).decode()
+            if self.path.split("?")[0] == "/login":
+                f = urllib.parse.parse_qs(raw)
+                if hmac.compare_digest(f.get("user", [""])[0].strip().lower(), "karuna") & hmac.compare_digest(f.get("pw", [""])[0], pw):
+                    q = urllib.parse.urlparse(self.path).query    # e.g. ?q=… from Discover's "+ Tunarr"
+                    return self.redirect(session, "/?" + q + "#search" if q else "/")
+                time.sleep(1)                           # slow down password guessing
+                return self.reply(LOGIN.replace("@@err@@", '<div class="err">Wrong username or password</div>'), code=401)
             if not self.authed():
                 return
-            raw = self.rfile.read(int(self.headers.get("Content-Length", 0))).decode()
             if self.path.startswith("/api/"):
                 try:
                     d = json.loads(raw or "{}")

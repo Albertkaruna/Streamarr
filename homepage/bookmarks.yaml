@@ -1,1 +1,32 @@
-[]
+# Quick-launch icon row (phone: one tap to each app). Host "pc.lan" is swapped by custom.js.
+- Open:
+    - Jellyfin:
+        - icon: jellyfin.png
+          href: http://pc.lan:8096
+    - Discover:
+        - icon: /images/discover.svg
+          href: http://pc.lan:5050
+    - Sonarr:
+        - icon: sonarr.png
+          href: http://pc.lan:8989
+    - Radarr:
+        - icon: radarr.png
+          href: http://pc.lan:7878
+    - Lidarr:
+        - icon: lidarr.png
+          href: http://pc.lan:8686
+    - Chaptarr:
+        - icon: chaptarr.png
+          href: http://pc.lan:8789
+    - qBittorrent:
+        - icon: qbittorrent.png
+          href: http://pc.lan:8080
+    - Prowlarr:
+        - icon: prowlarr.png
+          href: http://pc.lan:9696
+    - Tunarr:
+        - icon: /images/tunarr.svg
+          href: http://pc.lan:5040
+    - slskd:
+        - icon: slskd.png
+          href: http://pc.lan:5030
