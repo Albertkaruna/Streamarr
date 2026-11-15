@@ -23,6 +23,9 @@ How it flows:
   Removed from Trakt → unmonitored (files kept). Pick seasons: nzb360 → Sonarr → untick seasons.
 - **Quality**: HD 720p/1080p profile, CAM/TS blocked; music 320 kbps / FLAC.
 - **Remote access**: Tailscale, PC name `streamarr` → `http://streamarr:<port>` from anywhere. Phone: nzb360 (manage), Findroid (watch).
+- **Logins**: no password prompt on the home LAN — qBittorrent bypasses auth for the hotspot/Docker/Tailscale subnets
+  (Options → Web UI → whitelist; session timeout 1 year), the *arr apps use "Disabled for Local Addresses". Via Tailscale the
+  *arr apps still ask once — tick "Remember me". Anyone on the hotspot can open them, so keep the hotspot password on.
 
 Files: `docker-compose.yml` (all containers), `.env` (secrets — not in git), `credentials.txt` (logins — not in git),
 `homepage/` (dashboard), `jellyfin-branding/` (theme CSS, logo, splash — paste via Jellyfin Dashboard → Branding),
