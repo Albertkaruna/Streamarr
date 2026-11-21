@@ -46,7 +46,9 @@ if git remote get-url origin >/dev/null 2>&1; then
   fi
 fi
 
-if timeout 30m rclone sync "$DEST" gdrive:Streamarr-Backups --include 'servarr-*.tar.gz' --stats-one-line --stats 1m -v; then
+# hotspot DNS drops for a minute at a time: wait and retry instead of failing within a second
+if timeout 2h rclone sync "$DEST" gdrive:Streamarr-Backups --include 'servarr-*.tar.gz' \
+     --retries 10 --retries-sleep 1m --low-level-retries 20 --stats-one-line --stats 5m -v; then
   dr="✓"; echo "drive ok"
 else
   failed+=" drive"
